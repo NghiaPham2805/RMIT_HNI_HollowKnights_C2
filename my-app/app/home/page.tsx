@@ -1,208 +1,318 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useTideCloak } from '@tidecloak/nextjs'
-import type { TidecloakConfig } from '@tidecloak/nextjs/server'
-import { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
-import rawConfig from "../../tidecloak.json"
-
-// tidecloak.json is a placeholder ({}) until `npm run init` provisions the realm
-// and writes the real adapter config. Type it via the SDK's own config shape so
-// fields like `realm` type-check regardless of the placeholder's contents.
-const tcConfig = rawConfig as TidecloakConfig
-
+import Navbar from '../components/Navbar'
 
 export default function HomePage() {
-  const { logout, getValueFromIdToken, hasRealmRole, token, doEncrypt, doDecrypt } = useTideCloak()
+  const { authenticated, login, getValueFromIdToken, hasRealmRole, getValueFromToken } = useTideCloak()
 
-  const [username, setUsername] = useState("")
-  const [hasDefaultRole, setHasDefaultRole] = useState(false)
-  const [verifyResult, setVerifyResult] = useState<string | null>(null)
-  const [verifying, setVerifying] = useState(false)
-
-  // Self encrypt/decrypt: data is bound to THIS user's identity, so only they can
-  // decrypt it. The "message" tag matches the _tide_message.selfencrypt/.selfdecrypt
-  // roles granted to every user in init/realm.json.
-  const TAG = "message"
-  const [text, setText] = useState("")        // always the decrypted value, editable
-  const [busy, setBusy] = useState(false)
-  const [status, setStatus] = useState("")
-  const [cryptoErr, setCryptoErr] = useState("")
-
-  // localStorage key for the saved note, namespaced per user (vuid).
-  const storageKey = () => `tide-note:${getValueFromIdToken("vuid")}`
+  const [stats, setStats] = useState({ total: 0, stage: '1. Blind Review' })
+  const username = getValueFromIdToken('preferred_username') || 'Guest'
+  const hasDecrypt = hasRealmRole('_tide_identity.selfdecrypt')
+  const hasEncrypt = hasRealmRole('_tide_identity.selfencrypt')
+  const clientRoles = getValueFromToken('resource_access')?.myclient?.roles || []
 
   useEffect(() => {
-    if (token) {
-      const name = getValueFromIdToken("preferred_username")
-      const defaultRole = hasRealmRole(`default-roles-${tcConfig["realm"]}`)
-      setUsername(name);
-      setHasDefaultRole(defaultRole)
-
-      // Restore the saved note. Only the CIPHERTEXT is persisted; we decrypt it
-      // client-side here so the field shows plaintext when you log back in.
-      const stored = typeof window !== "undefined" ? localStorage.getItem(storageKey()) : null
-      if (stored) {
-        doDecrypt([{ encrypted: stored, tags: [TAG] }])
-          .then((res) => setText(String(res[0])))
-          .catch(() => {})
-      }
-    }
-
-  }, [token])
-
-  const onLogout = useCallback(() => {
-    logout()
-  }, [logout])
-
-  const onVerify = useCallback(async () => {
-    setVerifying(true)
-    setVerifyResult(null)
-    try {
-      const res = await fetch('/api/protected', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    fetch('/api/portfolios')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.portfolios) {
+          setStats({ total: data.portfolios.length, stage: data.stage })
+        }
       })
-      const data = await res.json()
-      if (res.ok) {
-        setVerifyResult(`✅ Authorized: vuid=${data.vuid}, key=${data.userkey}`)
-      } else {
-        setVerifyResult(`❌ ${res.status} - ${data.error || res.statusText}`)
-      }
-    } catch (err: any) {
-      setVerifyResult(`❌ Network error: ${err.message}`)
-    } finally {
-      setVerifying(false)
-    }
-  }, [token])
-
-  // Submit = encrypt the current value, persist the ciphertext, then decrypt it
-  // straight back so the field keeps showing plaintext. We store only the
-  // ciphertext (here in localStorage; in a real app, on your server), and it's
-  // decrypted again when you log back in.
-  const onSubmit = useCallback(async () => {
-    setBusy(true); setCryptoErr(""); setStatus("")
-    try {
-      const [ct] = await doEncrypt([{ data: text, tags: [TAG] }])
-      if (typeof window !== "undefined") localStorage.setItem(storageKey(), ct)
-      const [pt] = await doDecrypt([{ encrypted: ct, tags: [TAG] }])
-      setText(String(pt))
-      setStatus("Message successfully stored")
-    } catch (err: any) {
-      setCryptoErr(err.message || "Failed")
-    } finally {
-      setBusy(false)
-    }
-  }, [text, doEncrypt, doDecrypt])
+      .catch(() => {})
+  }, [])
 
   return (
-    <div style={containerStyle}>
-      <div style={cardStyle}>
-        <h1 style={{ margin: 0, fontSize: '1.5rem' }}>Hello, {username}!</h1>
-        <p style={{ margin: '0.5rem 0', color: '#555' }}>
-          Has default roles? <strong>{hasDefaultRole ? 'Yes' : 'No'}</strong>
-        </p>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Navbar currentStage={stats.stage} />
 
-        <button onClick={onLogout} style={buttonStyle}>
-          Log out
-        </button>
+      <main style={mainContentStyle}>
+        {/* Hero Section */}
+        <div style={heroSectionStyle}>
+          <div style={statusPillStyle}>
+            <span style={pulsingDotStyle} />
+            <span>Cryptographic State: <strong>{stats.stage}</strong></span>
+          </div>
 
-        <button
-          onClick={onVerify}
-          style={{ ...buttonStyle, marginTop: '0.5rem' }}
-          disabled={verifying}
-        >
-          {verifying ? 'Verifying…' : 'Verify Token'}
-        </button>
+          <h1 style={heroHeadlineStyle}>
+            Bias-Free Evaluation with <br />
+            <span style={gradientTextStyle}>Decentralized Confidentiality</span>
+          </h1>
 
-        <div style={{ marginTop: '0.75rem' }}>
-          <Link
-            href="/test"
-            style={{
-              display: 'inline-block',
-              ...buttonStyle,
-              background: '#0f9d58',
-              textDecoration: 'none',
-              marginTop: 0,
-            }}
-          >
-            Go to Phase 1 Test (/test) →
-          </Link>
-        </div>
-
-        {verifyResult && (
-          <p style={{ marginTop: '1rem', color: verifyResult.startsWith('✅') ? 'green' : 'red' }}>
-            {verifyResult}
-          </p>
-        )}
-
-        {/* ── Encrypted note: always shown decrypted; Submit re-encrypts then decrypts ── */}
-        <div style={{ marginTop: '1.5rem', borderTop: '1px solid #eee', paddingTop: '1rem', textAlign: 'left' }}>
-          <h2 style={{ fontSize: '1.1rem', margin: '0 0 0.25rem' }}>Your encrypted note</h2>
-          <p style={{ margin: '0 0 0.5rem', color: '#777', fontSize: '0.85rem' }}>
-            This is an encrypted textbox under your own identity. Only you can decrypt it.
+          <p style={heroSubtextStyle}>
+            Blind Portfolio Review seals candidate names, emails, and academic backgrounds in browser-side
+            hardware enclaves using TideCloak tag-based cryptography. Reviewers evaluate purely on merits
+            until threshold consensus authorizes unblinding.
           </p>
 
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Type your note…"
-            style={textareaStyle}
-          />
-          <button onClick={onSubmit} style={buttonStyle} disabled={busy}>
-            {busy ? 'Submitting…' : 'Submit'}
-          </button>
-
-          {status && <p style={{ color: 'green', marginTop: '0.5rem', fontSize: '0.85rem' }}>{status}</p>}
-
-          {cryptoErr && <p style={{ color: 'red', marginTop: '0.5rem' }}>{cryptoErr}</p>}
+          <div style={heroActionsStyle}>
+            <Link href="/apply" style={primaryActionBtnStyle}>
+              <span>📝</span> Apply as Candidate
+            </Link>
+            <Link href="/review" style={secondaryActionBtnStyle}>
+              <span>⚖️</span> Review Portfolios ({stats.total})
+            </Link>
+            <Link href="/reveal" style={tertiaryActionBtnStyle}>
+              <span>🔓</span> Reveal Shortlist
+            </Link>
+          </div>
         </div>
-      </div>
+
+        {/* Feature Grid */}
+        <div style={gridStyle}>
+          {/* Card 1 */}
+          <div style={featureCardStyle}>
+            <div style={cardIconStyle('#06b6d4')}>🔒</div>
+            <h3 style={cardTitleStyle}>Zero-Knowledge Submissions</h3>
+            <p style={cardDescStyle}>
+              Identity fields are encrypted directly in the client browser with Tide tag <code>"identity"</code>.
+              The application server and databases store <strong>only ciphertext</strong>.
+            </p>
+            <Link href="/apply" style={cardLinkStyle('#06b6d4')}>
+              Open Candidate Portal →
+            </Link>
+          </div>
+
+          {/* Card 2 */}
+          <div style={featureCardStyle}>
+            <div style={cardIconStyle('#6366f1')}>⚖️</div>
+            <h3 style={cardTitleStyle}>Cryptographic Blind Review</h3>
+            <p style={cardDescStyle}>
+              Reviewers assess code quality, architecture reasoning, and test depth. Identity is locked behind
+              decentralized ORK nodes and cannot be unlocked by client hacks or database reads.
+            </p>
+            <Link href="/review" style={cardLinkStyle('#6366f1')}>
+              Open Reviewer Board →
+            </Link>
+          </div>
+
+          {/* Card 3 */}
+          <div style={featureCardStyle}>
+            <div style={cardIconStyle('#10b981')}>🛡️</div>
+            <h3 style={cardTitleStyle}>Role-Gated Unblinding</h3>
+            <p style={cardDescStyle}>
+              Moving to Stage 3 doesn't flip a UI toggle. Unblinding requires the administrator to grant
+              <code>_tide_identity.selfdecrypt</code> in the TideCloak IAM console.
+            </p>
+            <Link href="/reveal" style={cardLinkStyle('#10b981')}>
+              Lead Reveal Console →
+            </Link>
+          </div>
+        </div>
+
+        {/* Current Auth Diagnostic Banner */}
+        <div style={diagnosticCardStyle}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.05em' }}>
+                Active Identity Token Context
+              </div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f8fafc', marginTop: '0.2rem' }}>
+                {authenticated ? `Logged in as: ${username}` : 'Unauthenticated Session'}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <div style={infoPillStyle}>
+                Client Roles: <strong>{clientRoles.join(', ') || 'none'}</strong>
+              </div>
+              <div style={infoPillStyle}>
+                Tag Encrypt: <strong style={{ color: hasEncrypt ? '#34d399' : '#f87171' }}>{hasEncrypt ? 'YES' : 'NO'}</strong>
+              </div>
+              <div style={infoPillStyle}>
+                Tag Decrypt: <strong style={{ color: hasDecrypt ? '#34d399' : '#f87171' }}>{hasDecrypt ? 'YES' : 'NO'}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   )
 }
 
-const textareaStyle: React.CSSProperties = {
+// ─────────────────────────────────────────────────────────────────────────────
+// Styles
+// ─────────────────────────────────────────────────────────────────────────────
+
+const mainContentStyle: React.CSSProperties = {
+  maxWidth: '1280px',
+  margin: '0 auto',
+  padding: '3rem 1.5rem',
   width: '100%',
-  minHeight: '64px',
-  padding: '0.5rem',
-  borderRadius: '4px',
-  border: '1px solid #ccc',
-  boxSizing: 'border-box',
-  fontFamily: 'inherit',
-  fontSize: '0.9rem',
 }
 
+const heroSectionStyle: React.CSSProperties = {
+  textAlign: 'center',
+  padding: '3rem 1rem 4rem',
+  maxWidth: '900px',
+  margin: '0 auto',
+}
 
-const containerStyle: React.CSSProperties = {
-  minHeight: '100vh',
+const statusPillStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+  padding: '0.35rem 0.9rem',
+  borderRadius: '999px',
+  background: 'rgba(99, 102, 241, 0.1)',
+  border: '1px solid rgba(99, 102, 241, 0.25)',
+  fontSize: '0.8rem',
+  color: '#c7d2fe',
+  marginBottom: '1.5rem',
+}
+
+const pulsingDotStyle: React.CSSProperties = {
+  width: '7px',
+  height: '7px',
+  borderRadius: '50%',
+  backgroundColor: '#06b6d4',
+  boxShadow: '0 0 10px #06b6d4',
+}
+
+const heroHeadlineStyle: React.CSSProperties = {
+  fontSize: 'clamp(2.2rem, 4.5vw, 3.5rem)',
+  fontWeight: 800,
+  letterSpacing: '-0.025em',
+  lineHeight: 1.15,
+  color: '#f8fafc',
+  marginBottom: '1.25rem',
+}
+
+const gradientTextStyle: React.CSSProperties = {
+  background: 'linear-gradient(135deg, #06b6d4 0%, #818cf8 50%, #c084fc 100%)',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+}
+
+const heroSubtextStyle: React.CSSProperties = {
+  fontSize: '1.05rem',
+  color: '#94a3b8',
+  lineHeight: 1.6,
+  marginBottom: '2.5rem',
+}
+
+const heroActionsStyle: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'center',
+  gap: '1rem',
+  flexWrap: 'wrap',
+}
+
+const primaryActionBtnStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+  padding: '0.75rem 1.6rem',
+  borderRadius: '10px',
+  background: 'linear-gradient(135deg, #06b6d4 0%, #6366f1 100%)',
+  color: '#ffffff',
+  fontSize: '0.92rem',
+  fontWeight: 700,
+  textDecoration: 'none',
+  boxShadow: '0 0 25px rgba(6, 182, 212, 0.35)',
+  border: '1px solid rgba(255, 255, 255, 0.15)',
+}
+
+const secondaryActionBtnStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+  padding: '0.75rem 1.6rem',
+  borderRadius: '10px',
+  background: 'rgba(255, 255, 255, 0.05)',
+  color: '#f8fafc',
+  fontSize: '0.92rem',
+  fontWeight: 600,
+  textDecoration: 'none',
+  border: '1px solid rgba(255, 255, 255, 0.12)',
+  backdropFilter: 'blur(10px)',
+}
+
+const tertiaryActionBtnStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+  padding: '0.75rem 1.6rem',
+  borderRadius: '10px',
+  background: 'rgba(16, 185, 129, 0.1)',
+  color: '#34d399',
+  fontSize: '0.92rem',
+  fontWeight: 600,
+  textDecoration: 'none',
+  border: '1px solid rgba(16, 185, 129, 0.25)',
+}
+
+const gridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+  gap: '1.5rem',
+  marginBottom: '3rem',
+}
+
+const featureCardStyle: React.CSSProperties = {
+  background: 'rgba(18, 24, 38, 0.65)',
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  borderRadius: '16px',
+  padding: '2rem',
+  boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.5)',
+  backdropFilter: 'blur(12px)',
+  display: 'flex',
+  flexDirection: 'column',
+}
+
+const cardIconStyle = (color: string): React.CSSProperties => ({
+  width: '46px',
+  height: '46px',
+  borderRadius: '12px',
+  background: `${color}15`,
+  border: `1px solid ${color}40`,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  background: '#f5f5f5',
-  margin: 0,
+  fontSize: '1.3rem',
+  marginBottom: '1.25rem',
+})
+
+const cardTitleStyle: React.CSSProperties = {
+  fontSize: '1.18rem',
+  fontWeight: 700,
+  color: '#f8fafc',
+  marginBottom: '0.6rem',
 }
 
-const cardStyle: React.CSSProperties = {
-  background: '#fff',
-  padding: '2rem',
-  borderRadius: '8px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-  textAlign: 'center',
-  maxWidth: '660px',
-  width: '100%',
+const cardDescStyle: React.CSSProperties = {
+  fontSize: '0.88rem',
+  color: '#94a3b8',
+  lineHeight: 1.6,
+  marginBottom: '1.5rem',
+  flexGrow: 1,
 }
 
-const buttonStyle: React.CSSProperties = {
-  marginTop: '1rem',
-  padding: '0.75rem 1.5rem',
-  fontSize: '1rem',
-  borderRadius: '4px',
-  border: 'none',
-  background: '#0070f3',
-  color: '#fff',
-  cursor: 'pointer',
+const cardLinkStyle = (color: string): React.CSSProperties => ({
+  fontSize: '0.85rem',
+  fontWeight: 600,
+  color: color,
+  textDecoration: 'none',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.3rem',
+})
+
+const diagnosticCardStyle: React.CSSProperties = {
+  background: 'rgba(15, 20, 32, 0.8)',
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  borderRadius: '12px',
+  padding: '1.25rem 1.5rem',
 }
 
+const infoPillStyle: React.CSSProperties = {
+  fontSize: '0.8rem',
+  background: 'rgba(255, 255, 255, 0.04)',
+  border: '1px solid rgba(255, 255, 255, 0.08)',
+  padding: '0.35rem 0.75rem',
+  borderRadius: '6px',
+  color: '#94a3b8',
+}

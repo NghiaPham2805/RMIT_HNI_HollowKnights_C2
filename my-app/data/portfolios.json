@@ -1,0 +1,50 @@
+{
+  "stage": "1. Blind Review",
+  "portfolios": [
+    {
+      "id": "app-1792656133224-pjf6l",
+      "applicantVuid": "synthetic-qegv6y",
+      "portfolioTitle": "Verifiable Homomorphic Voting System",
+      "portfolioDescription": "Paillier cryptosystem implementation for verifiable tallying with end-to-end receipt proofs and multi-party threshold keys.",
+      "encryptedIdentity": "AQAAAAEAAAABcQAAAKAHWReLP/uk8O39coo2cRDqbkJwccV0vuaUTdxB683VJYXhFikF514xLjoDoUMRxwwt5ehrzEkxeRfUjaDQBR2G+8lrY4g9oHZXMGi0O9OSlV3N4OReBLP/aNMI+KSC7TFU8rb+rX0ZFy/Nn6IbjBv9CAAAAAHD2WoAAAAAXAAAAO3CQA7sAOoh8ASK6qrfXr4bL9hQrRM0UK+iliegqo/v3oaJvhon8k9UnwhqVsfnhDJgnubnDlyGpyNbkMwEWpgbx5n3SY5ybw8YUEAB8o1B8cyoOua3SIXbk+FTQAAAAEtTo1kNVcRhY91iFWmIsFhwqdQIKc/L2c0ue78MgA9BuJhVV5ze6ThBwhCte86GZ1Gm3v5VxvHwAbtqAIc+6Qs=",
+      "scores": [],
+      "createdAt": "2026-10-22T08:02:13.224Z"
+    },
+    {
+      "id": "app-1792656133224-5dv31",
+      "applicantVuid": "synthetic-tez8n6",
+      "portfolioTitle": "Autonomous Multi-Agent Task Planner",
+      "portfolioDescription": "Hierarchical LLM orchestration platform with dynamic DAG execution, deterministic state rollbacks, and sandboxed execution.",
+      "encryptedIdentity": "AQAAAAEAAAABZwAAADgZp+Zhzq6nkZVtCnQjpnmuqRM162KzSezs1+Uq7qX6WrvXUylA1UgLyLlgz1H3RI+i5xcdq2FAath5WnoyN5KakaR8Hwa7NAiWgKxtauEQIWNjlQkm/tj4Hb33Nmf34a2q8oqttcQIAAAA/sLZagAAAABcAAAAr/j10MSQ+7CLwodab4Em6qvg6nyCKdu+r/0Q3F6E9O7/6NHPFkixtd7ag1VwjRwZjmOUwks5nGlsF9DEeZ5CYzB5lcdTmVTpUj0075utYhSEPMx85MNmu6OZXYtAAAAAWYKbUmgccqIHONPOtsjvZkOC5Wiq/ghD/Le8VlCFovb5FrwdMjA0MxL5gjJhti5Aod+BHHAzRAr2NZUi9CgPAg==",
+      "scores": [],
+      "createdAt": "2026-10-22T08:02:13.224Z"
+    },
+    {
+      "id": "app-1792656133224-o4p0q",
+      "applicantVuid": "synthetic-1blxry",
+      "portfolioTitle": "Kernel-Level eBPF Packet Filter & Firewall",
+      "portfolioDescription": "Custom XDP/eBPF network packet inspector handling 14M pps DDoS mitigation directly in the Linux network driver layer.",
+      "encryptedIdentity": "AQAAAAEAAAABagAAAL3gvLQgNwlIw8cNj1KJX6XOOld25BW8OemOZe5kV7WceQZFO7D023bKM8XaqQgyj9dV8t3xDOAS9krP3OIQdtDlYUfTVQNVtz6wTZg+79AUloLhI/CY+vdrVP6CWlmT9Fhdsq32sdhOITMIAAAA/MLZagAAAABcAAAANbX6D44WfgTMoqgZ4vONpZd/W++BbMG32gjdibfnQnpQKE9i7Q+wGyG9M/heDpkA3+z9s538TXstBsgifDyaGC2N8x/rGlAD9GYZrcyOy40mVU9/34TB8HNXmLJAAAAACV8OhN466m1TVBwMAdgw2e5tlj60BaFQ3bvI9K7TiO/LBymn3v1VqA7XS4EjQLYBECZenDtEiwRngXfrNFTODw==",
+      "scores": [],
+      "createdAt": "2026-10-22T08:02:13.224Z"
+    },
+    {
+      "id": "app-1792656133224-uvrj2",
+      "applicantVuid": "synthetic-ajcqp5",
+      "portfolioTitle": "Zero-Knowledge Credential Issuer",
+      "portfolioDescription": "Circom + snarkjs zk-SNARK identity proof verification suite with client-side proof generation under 400ms.",
+      "encryptedIdentity": "AQAAAAEAAAABcgAAAB9kNhl+QZkaqluZSZ8Uz2VVxRuRWRGBOv85dYCkXHU2DjKYIthbfTWfu5B+QaRO7NsWmxG3T5lBwMNfLColCaGqse3Wsbfv5JQfykTn23T5L86BIpTRe9NM23oHB3FUvhaMId72LU/83/OxXwzeY/RFDggAAAD6wtlqAAAAAFwAAADirutv+xs68ipF2KI8tfKOGusUxTYqb+3S/uWA7j1nWFntjrkAeaH/S21WZbrK4Zb4i4T+JL5MC6bLbMAxD9ow/Yezn2dyb+8WHVZFiB0Ba2s1VXvKWIcOyoz+xUAAAAD96EQcjgM6gziEE+NjBVfsdPfx6HtNG9ZjUwiNnLbsZXi0LwQNm/zu/HSBD6XXj0WeHBVeDkaJ/G7NE+mxNQMC",
+      "scores": [],
+      "createdAt": "2026-10-22T08:02:13.224Z"
+    },
+    {
+      "id": "app-1792656133224-tsjwj",
+      "applicantVuid": "synthetic-tcfxx3",
+      "portfolioTitle": "Distributed Byzantine Consensus Engine in Rust",
+      "portfolioDescription": "High-throughput async BFT implementation with threshold cryptographic pipelining and zero-allocation memory pooling.",
+      "encryptedIdentity": "AQAAAAEAAAABZQAAAOS0cYZsXpVzCWZfBS/4Idk0qRf1j82rUIBqdv+lV1LiTsA0HqNzOsyI89tREOpi53/Dk6uifBdWFfW9u7XDyc87AkOTw7yR1OaqKFFpC4js+QCJkkIs3jIOpvGrvw2a8MdIZSZeCAAAAPjC2WoAAAAAXAAAADHVzzdm9nm+NsSTsHoMUucE4/FYg2qcXZmHutcFh/AdB9Qui0qijmVjx9TG2VM+j8q1/mm66LFvpR7vaRijXa6YdRFMmozV0rrxyKfY58Fzwsc5uop6vP8HdrQZQAAAANG3V9kAqzwg4ZUprWDU+5NI5lSQOSorAFMB617pPA4ir2mK76QpXJrhd+IYL5WXYlVi1K99pRJ+gsRXi/5zrw8=",
+      "scores": [],
+      "createdAt": "2026-10-22T08:02:13.224Z"
+    }
+  ]
+}
